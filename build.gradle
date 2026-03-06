@@ -1,0 +1,178 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+}
+
+plugins {
+	id 'eclipse'
+	id 'idea'
+	id 'maven-publish'
+	id 'net.minecraftforge.gradle' version '[6.0,6.2)'
+}
+
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
+version = "${mod_version}"
+group = "${mod_group}.${mod_id}"
+
+base {
+	archivesName = "${mod_id}"
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
+minecraft {
+	mappings channel: mapping_channel, version: mapping_version
+	copyIdeResources = true
+
+	runs {
+		configureEach {
+			workingDirectory project.file('run')
+			property 'forge.logging.markers', 'REGISTRIES'
+			property 'forge.logging.console.level', 'debug'
+
+			mods {
+				"${mod_id}" {
+					source sourceSets.main
+				}
+			}
+		}
+
+		client {
+			property 'forge.enabledGameTestNamespaces', mod_id
+			property 'mixin.env.disableRefMap', 'true'
+			property 'forge.logging.markers', 'REGISTRIES'
+			property 'forge.logging.console.level', 'debug'
+			args "--width", "1280"
+			args "--height", "720"
+
+			if (minecraft_arguments) {
+				args minecraft_arguments.split(" ")
+			}
+
+		}
+
+		server {
+			property 'forge.enabledGameTestNamespaces', mod_id
+		}
+
+		gameTestServer {
+			property 'forge.enabledGameTestNamespaces', mod_id
+		}
+
+		data {
+			workingDirectory project.file('run-data')
+			args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+		}
+	}
+}
+
+sourceSets {
+	main {
+		resources {
+			srcDir 'src/generated/resources'
+			srcDir 'src/main/resources'
+		}
+	}
+}
+
+repositories {
+	flatDir {
+		dir 'libs'
+	}
+	maven {
+		url "https://cursemaven.com"
+		content {
+			includeGroup "curse.maven"
+		}
+	}
+}
+
+dependencies {
+	minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+
+	implementation fg.deobf("com.google.code.gson:gson:2.10.1")
+
+	runtimeOnly(fg.deobf("blank:jei-1.20.1-forge:15.20.0.112"))
+	runtimeOnly(fg.deobf("blank:Jade-1.20.1-Forge-11.13.2:11.13.2"))
+	runtimeOnly(fg.deobf("blank:architectury-9.2.14-forge:9.2.14"))
+	runtimeOnly(fg.deobf("blank:cupboard-1.20.1-2.7:2.7"))
+	runtimeOnly(fg.deobf("blank:constructionwand-1.20.1-2.11:2.11"))
+	runtimeOnly(fg.deobf("blank:fastboot-1.20.x-1.2:1.2"))
+	runtimeOnly(fg.deobf("blank:Fastload-Reforged-mc1.20.1-3.4.0:3.4.0"))
+	runtimeOnly(fg.deobf("blank:ParCool-1.20.1-3.4.2.0:3.4.2.0"))
+	runtimeOnly(fg.deobf("curse.maven:quickskin-1323980:7226544"))
+	runtimeOnly(fg.deobf("curse.maven:create-328085:7178761"))
+	runtimeOnly(fg.deobf("blank:PuzzlesLib-v8.1.33-1.20.1-Forge:8.1.33"))
+	runtimeOnly(fg.deobf("blank:embeddium-0.3.31+mc1.20.1:0.3.31"))
+	runtimeOnly(fg.deobf("blank:chloride-FORGE-mc1.20.1-v1.7.3:1.7.3"))
+	runtimeOnly(fg.deobf("blank:sodiumdynamiclights-forge-1.0.10-1.20.1:1.0.10"))
+	runtimeOnly(fg.deobf("blank:sodiumoptionsapi-forge-1.0.10-1.20.1:1.0.10"))
+	runtimeOnly(fg.deobf("blank:oculus-mc1.20.1-1.8.0:1.8.0"))
+	runtimeOnly(fg.deobf("curse.maven:chariotsanzzo-companion-1470564:7670990"))
+}
+
+tasks.named('processResources', ProcessResources).configure {
+	var replaceProperties = [
+		minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+		forge_version: forge_version, forge_version_range: forge_version_range,
+		loader_version_range: loader_version_range,
+		mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+		mod_authors: mod_authors, mod_description: mod_description,
+	]
+	inputs.properties replaceProperties
+
+	filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+		expand replaceProperties + [project: project]
+	}
+}
+
+tasks.named('jar', Jar).configure {
+	manifest {
+		attributes([
+			'Specification-Title'     : mod_id,
+			'Specification-Vendor'    : mod_authors,
+			'Specification-Version'   : '1',
+			'Implementation-Title'    : project.name,
+			'Implementation-Version'  : project.jar.archiveVersion,
+			'Implementation-Vendor'   : mod_authors,
+			'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+		])
+	}
+	finalizedBy 'reobfJar'
+}
+
+publishing {
+		publications {
+				register('mavenJava', MavenPublication) {
+						artifact jar
+				}
+		}
+		repositories {
+				maven {
+						url "file://${project.projectDir}/mcmodsrepo"
+				}
+		}
+}
+
+tasks.withType(JavaCompile).configureEach {
+		options.encoding = 'UTF-8'
+}
+
+tasks.named('processResources', ProcessResources).configure {
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+	doLast {
+		def generatedLang = file("src/generated/resources/assets/albinaprops/lang/en_us.json")
+		def manualLang = file("src/main/resources/assets/albinaprops/lang/en_us.json")
+		def buildLang = file("$buildDir/resources/main/assets/albinaprops/lang/en_us.json")
+		def slurper = new JsonSlurper()
+		def generated = slurper.parse(generatedLang)
+		def manual = slurper.parse(manualLang)
+		def merged = generated + manual
+		buildLang.text = JsonOutput.prettyPrint(JsonOutput.toJson(merged))
+	}
+}
