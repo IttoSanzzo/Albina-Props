@@ -24,6 +24,8 @@ run
 run-data
 libs
 .env
+src/generated
+src/test
 
 # Files from Forge MDK
 forge*changelog.txt
