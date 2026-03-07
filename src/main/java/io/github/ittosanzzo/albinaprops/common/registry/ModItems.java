@@ -24,9 +24,8 @@ public class ModItems {
 		ITEMS.register(context.getModEventBus());
 	}
 
-	public static final RegistryObject<Item> TEST_ITEM = registerPropPng("test_item");
 	public static final RegistryObject<Item> KUREHIME = registerPropPng("kurehime");
-	public static final RegistryObject<Item> HOROLOGIUM_LAUFORD = registerPropPng("horologium_lauford");
+	public static final RegistryObject<Item> HOROLOGIUN_LAUFORD = registerPropPng("horologiun_lauford");
 	public static final RegistryObject<Item> VIOLIETCH = registerPropPng("violietch");
 	public static final RegistryObject<Item> CARMEN_AB_INITIO = registerPropPng("carmen_ab_initio");
 	public static final RegistryObject<Item> TEA = registerPropPng("tea");
