@@ -1,4 +1,9 @@
 {
 	"itemGroup.albinaprops.albinaprops": "Albina Props",
-	"item.albinaprops.horologiun_lauford": "Horologiun'Lauford"
+	"item.albinaprops.horologiun_lauford": "Horologiun'Lauford",
+	"item.albinaprops.chained_horologiun_lauford": "Chained Horologiun'Lauford",
+	"item.albinaprops.golden_horologiun_lauford": "Golden Horologiun'Lauford",
+	"item.albinaprops.chained_golden_horologiun_lauford": "Chained Golden Horologiun'Lauford",
+	"item.albinaprops.violitch": "Violītch",
+	"item.albinaprops.open_violitch": "Open Violītch"
 }
